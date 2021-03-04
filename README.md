@@ -6,7 +6,7 @@ InfluxDB 🙌 YoMo. Demonstrates how to integrate InfluxDB to YoMo and bulk inse
 
 InfluxDB is an open source time series platform. This includes APIs for storing and querying data, processing it in the background for ETL or monitoring and alerting purposes, user dashboards, and visualizing and exploring the data and more.
 
-For more information, please visit [InfluxDB homepage](https://www.influxdata.com/products/influxdb/)
+For more information, please visit [InfluxDB homepage](https://www.influxdata.com/products/influxdb/).
 
 ## About YoMo
 
@@ -14,7 +14,7 @@ For more information, please visit [InfluxDB homepage](https://www.influxdata.co
 
 ## 1: Download and install InfluxDB v2.0
 
-### Download abd run InfluxDB v2.0 via Docker
+### Run InfluxDB v2.0 via Docker
 
 ```bash
 docker run -d -p 8086:8086 quay.io/influxdb/influxdb:v2.0.4
@@ -155,7 +155,7 @@ INFLUXDB_TOKEN=your-influxdb-token go run main.go
 cd source && go run main.go
 ```
 
-This will start a [YoMo-Source](https://yomo.run/source), demonstrate a random float every 100ms to YoMo-Zipper.
+This will start a [YoMo-Source](https://yomo.run/source), demonstrate a random float every 100ms to [YoMo-Zipper](https://yomo.run/zipper).
 
 ## 4. Verify data in InfluxDB
 
