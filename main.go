@@ -15,7 +15,9 @@ import (
 	"github.com/yomorun/yomo/pkg/quic"
 )
 
-const batchSize = 100
+const batchSize = 1000
+
+var bufferTime = rxgo.WithDuration(30 * time.Second)
 
 var (
 	client         influxdb2.Client
@@ -105,7 +107,7 @@ func insertNoisesInBatch(ch chan interface{}) {
 	}()
 
 	observable := rxgo.FromChannel(next).
-		BufferWithCount(batchSize) // buffer 100 noises in batch
+		BufferWithTimeOrCount(bufferTime, batchSize) // buffer 30s or 1000 noises in batch
 	go bulkInsert(observable)
 }
 
