@@ -4,7 +4,7 @@ InfluxDB 🙌 YoMo. Demonstrates how to integrate InfluxDB to YoMo and bulk inse
 
 ## About InfluxDB
 
-InfluxDB is an open source time series platform. This includes APIs for storing and querying data, processing it in the background for ETL or monitoring and alerting purposes, user dashboards, and visualizing and exploring the data and more. The master branch on this repo now represents the latest InfluxDB, which now includes functionality for Kapacitor (background processing) and Chronograf (the UI) all in a single binary.
+InfluxDB is an open source time series platform. This includes APIs for storing and querying data, processing it in the background for ETL or monitoring and alerting purposes, user dashboards, and visualizing and exploring the data and more.
 
 For more information, please visit [InfluxDB homepage](https://www.influxdata.com/products/influxdb/)
 
@@ -14,16 +14,22 @@ For more information, please visit [InfluxDB homepage](https://www.influxdata.co
 
 ## 1: Download and install InfluxDB v2.0
 
-[Get started with InfluxDB](https://docs.influxdata.com/influxdb/v2.0/get-started/)
+### Download abd run InfluxDB v2.0 via Docker
+
+```bash
+docker run -d -p 8086:8086 quay.io/influxdb/influxdb:v2.0.4
+```
+
+See [Get started with InfluxDB](https://docs.influxdata.com/influxdb/v2.0/get-started/) for more information.
 
 ## 2: Set up InfluxDB
 
 ### Set up InfluxDB through the UI
 
-1. With InfluxDB running, visit localhost:8086.
+1. With InfluxDB running, visit [localhost:8086](http://localhost:8086/).
 2. Click Get Started
 
-#### Set up your initial user
+### Set up your initial user
 
 1. Enter a Username for your initial user.
 2. Enter a Password and Confirm Password for your user.
@@ -133,25 +139,23 @@ func bulkInsert(observable rxgo.Observable) {
 Start this [YoMo-Sink](https://yomo.run/sink), will save data to InfluxDB wherever data arrives.
 
 ```bash
-INFLUXDB_TOKEN=your-influx-token go run main.go
+INFLUXDB_TOKEN=your-influxdb-token go run main.go
 ```
-
-**env**
 
 | env             | **description**|
 | --------------- | ----------------------------------------------------------------------------------|
+| INFLUXDB_TOKEN  | **Required:** Your InfuxDB Auth Token. You can generate a Token from the "Tokens Tab" in the InfluxDB UI. |
 | INFLUXDB_URL    | The URL of your InfluxDB Server. Default: http://localhost:8086 |
 | INFLUXDB_ORG    | Your Organization Name. Default: yomo |
 | INFLUXDB_BUCKET | Your Bucket Name. Default: noise |
-| INFLUXDB_TOKEN  | **Required** Your InfuxDB Auth Token. You can generate a Token from the "Tokens Tab" in the InfluxDB UI. |
 
-### Emulate a data source for test
+### Emulate a data source for testing
 
 ```bash
 cd source && go run main.go
 ```
 
-This will start a [YoMo-Source](https://yomo.run/source), demonstrates a random float every 100ms to YoMo-Zipper.
+This will start a [YoMo-Source](https://yomo.run/source), demonstrate a random float every 100ms to YoMo-Zipper.
 
 ## 4. Verify data in InfluxDB
 
