@@ -82,13 +82,13 @@ type srvHandler struct {
 
 func (s *srvHandler) Listen() error {
 	rxstream := rx.FromReaderWithY3(s.readers)
-	observable := rxstream.Subscribe(0x10).
+	observer := rxstream.Subscribe(0x10).
 		OnObserve(decode).
 		BufferWithTimeOrCount(bufferTime, batchSize)
 
 	rxstream.Connect(context.Background())
 
-	go bulkInsert(observable)
+	go bulkInsert(observer)
 	return nil
 }
 
@@ -106,8 +106,9 @@ func decode(v []byte) (interface{}, error) {
 	return data, err
 }
 
-func bulkInsert(observable rx.RxStream) {
-	for ch := range observable.Observe() {
+// bulk insert the data into InfluxDB
+func bulkInsert(observer rx.RxStream) {
+	for ch := range observer.Observe() {
 		if ch.Error() {
 			log.Println(ch.E.Error())
 		} else if ch.V != nil {
@@ -122,7 +123,7 @@ func bulkInsert(observable rx.RxStream) {
 				line := fmt.Sprintf("noise_sensor val=%f %s", item, strconv.FormatInt(time.Now().UnixNano(), 10))
 				writeAPI.WriteRecord(line)
 			}
-			// save the points in batch
+			// Flush writes
 			writeAPI.Flush()
 			log.Printf("Insert %d noise values into InfluxDB...", len(items))
 		}
