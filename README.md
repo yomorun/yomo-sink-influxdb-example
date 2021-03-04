@@ -67,7 +67,9 @@ func main() {
 	defer client.Close()
 
 	log.Print("Starting YoMo Sink server: -> InfluxDB")
-	srv := quic.NewServer(&srvHandler{})
+	srv := quic.NewServer(&srvHandler{
+		readers: make(chan io.Reader),
+	})
 	err := srv.ListenAndServe(context.Background(), sinkServerAddr)
 	if err != nil {
 		log.Printf("YoMo Sink server start failed: %s\n", err.Error())
@@ -75,19 +77,23 @@ func main() {
 }
 
 type srvHandler struct {
+	readers chan io.Reader
 }
 
 func (s *srvHandler) Listen() error {
+	rxstream := rx.FromReaderWithY3(s.readers)
+	observable := rxstream.Subscribe(0x10).
+		OnObserve(decode).
+		BufferWithTimeOrCount(bufferTime, batchSize)
+
+	rxstream.Connect(context.Background())
+
+	go bulkInsert(observable)
 	return nil
 }
 
 func (s *srvHandler) Read(qs quic.Stream) error {
-	ch := y3.FromStream(qs).
-		Subscribe(0x10).
-		OnObserve(decode)
-
-	insertNoisesInBatch(ch)
-
+	s.readers <- qs
 	return nil
 }
 
@@ -100,29 +106,18 @@ func decode(v []byte) (interface{}, error) {
 	return data, err
 }
 
-// insert noises into InfluxDB in batch
-func insertNoisesInBatch(ch chan interface{}) {
-	next := make(chan rxgo.Item)
-
-	go func() {
-		defer close(next)
-		for item := range ch {
-			next <- rxgo.Of(item)
-		}
-	}()
-
-	observable := rxgo.FromChannel(next).
-		BufferWithCount(batchSize) // buffer 100 noises in batch
-	go bulkInsert(observable)
-}
-
-func bulkInsert(observable rxgo.Observable) {
+func bulkInsert(observable rx.RxStream) {
 	for ch := range observable.Observe() {
 		if ch.Error() {
 			log.Println(ch.E.Error())
 		} else if ch.V != nil {
 			// bulk insert
-			items := ch.V.([]interface{})
+			items, ok := ch.V.([]interface{})
+			if !ok {
+				log.Println(ok)
+				continue
+			}
+
 			for _, item := range items {
 				line := fmt.Sprintf("noise_sensor val=%f %s", item, strconv.FormatInt(time.Now().UnixNano(), 10))
 				writeAPI.WriteRecord(line)
@@ -133,7 +128,6 @@ func bulkInsert(observable rxgo.Observable) {
 		}
 	}
 }
-
 ```
 
 Start this [YoMo-Sink](https://yomo.run/sink), will save data to InfluxDB wherever data arrives.
