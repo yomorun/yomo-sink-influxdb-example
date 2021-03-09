@@ -18,8 +18,9 @@ import (
 )
 
 const batchSize = 1000
+const bufferSeconds = 30
 
-var bufferTime = rxgo.WithDuration(30 * time.Second)
+var bufferTime = rxgo.WithDuration(bufferSeconds * time.Second)
 
 var (
 	client         influxdb2.Client
@@ -45,10 +46,12 @@ func init() {
 		bucket = "noise"
 	}
 
-	// create a new InfluxDB Client
+	// Create a new InfluxDB Client
 	client = influxdb2.NewClient(serverURL, token)
-	influxdb2.DefaultOptions().SetBatchSize(batchSize)
 	writeAPI = client.WriteAPI(org, bucket)
+	// Set options
+	influxdb2.DefaultOptions().SetBatchSize(batchSize)
+	influxdb2.DefaultOptions().SetFlushInterval(bufferSeconds * 1000)
 	// Get errors channel
 	errorsCh := writeAPI.Errors()
 	// Create go proc for reading and logging errors
@@ -118,9 +121,10 @@ func bulkInsert(observer rx.RxStream) {
 
 			for _, item := range items {
 				line := fmt.Sprintf("noise_sensor val=%f %s", item, strconv.FormatInt(time.Now().UnixNano(), 10))
+				// WriteRecord adds record into the buffer which is sent on the background when it reaches the batch size.
 				writeAPI.WriteRecord(line)
 			}
-			// Flush writes
+			// Flush forces all pending writes from the buffer to be sent
 			writeAPI.Flush()
 			log.Printf("Insert %d noise values into InfluxDB...", len(items))
 		}
