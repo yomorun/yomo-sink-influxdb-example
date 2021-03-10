@@ -119,14 +119,14 @@ func bulkInsert(observer rx.RxStream) {
 			log.Println(ch.E.Error())
 		} else if ch.V != nil {
 			// bulk insert
-			items, ok := ch.V.([]interface{})
+			items, ok := ch.V.([]ThermometerData)
 			if !ok {
 				log.Println(ok)
 				continue
 			}
 
 			for _, item := range items {
-				line := fmt.Sprintf("thermometer_sensor val=%f %s", item, strconv.FormatInt(time.Now().UnixNano(), 10))
+				line := fmt.Sprintf("thermometer_sensor tem=%f,hum=%f %s", item.Temperature, item.Humidity, strconv.FormatInt(time.Now().UnixNano(), 10))
 				// WriteRecord adds record into the buffer which is sent on the background when it reaches the batch size.
 				writeAPI.WriteRecord(line)
 			}
